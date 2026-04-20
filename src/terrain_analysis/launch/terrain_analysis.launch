@@ -1,0 +1,41 @@
+<launch>
+
+  <node pkg="terrain_analysis" type="terrainAnalysis" name="terrainAnalysis" output="screen" required="true">
+    <param name="scanVoxelSize" type="double" value="0.05" />
+    
+    <!-- 点云衰减参数 -->
+    <param name="decayTime" type="double" value="2.0" />      <!-- 点云衰减时间(秒)，保留足够帧做稳定地面估计 -->
+    <param name="noDecayDis" type="double" value="4.0" />     <!-- 不衰减距离(米)，近距离点不衰减保证地面估计稳定 -->
+    <param name="clearingDis" type="double" value="8.0" />    <!-- 清除距离(米) -->
+    
+    <param name="useSorting" type="bool" value="true" />       <!-- 使用排序后的分位数估算地面，比 min-Z 更抗颠簸噪声 -->
+    <param name="quantileZ" type="double" value="0.5" />
+    <param name="considerDrop" type="bool" value="false" />    <!-- 只检测凸起障碍物，不检测凹陷 -->
+    <param name="limitGroundLift" type="bool" value="false" />
+    <param name="maxGroundLift" type="double" value="0.15" />
+    
+    <!-- 动态障碍物清除 -->
+    <param name="clearDyObs" type="bool" value="true" />      <!-- 启用动态障碍物清除 -->
+    <param name="minDyObsDis" type="double" value="0.3" />
+    <param name="minDyObsAngle" type="double" value="0" />
+    <param name="minDyObsRelZ" type="double" value="-0.5" />
+    <param name="absDyObsRelZThre" type="double" value="0.2" />
+    <param name="minDyObsVFOV" type="double" value="-16.0" />
+    <param name="maxDyObsVFOV" type="double" value="16.0" />
+    <param name="minDyObsPointNum" type="int" value="1" />
+    
+    <param name="noDataObstacle" type="bool" value="false" />
+    <param name="noDataBlockSkipNum" type="int" value="0" />
+    <param name="minBlockPointNum" type="int" value="10" />
+    <param name="vehicleHeight" type="double" value="1.5" />
+    
+    <!-- 体素更新参数 -->
+    <param name="voxelPointUpdateThre" type="int" value="100" />
+    <param name="voxelTimeUpdateThre" type="double" value="2.0" />
+    
+    <param name="minRelZ" type="double" value="-2.5" />
+    <param name="maxRelZ" type="double" value="1.0" />
+    <param name="disRatioZ" type="double" value="0.2" />
+  </node>
+
+</launch>

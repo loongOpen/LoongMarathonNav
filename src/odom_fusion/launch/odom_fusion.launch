@@ -1,0 +1,22 @@
+<launch>
+  <node pkg="odom_fusion" type="odom_fusion_node" name="odom_fusion_node" output="screen">
+    <!-- Input topics -->
+    <param name="rtk_topic" value="/rtk_odom" />
+    <param name="lio_topic" value="/Odometry" />
+    <!-- Output: /fused_odom, /fused_path -->
+    <param name="frame_id" value="camera_init" />
+    <param name="child_frame_id" value="fused" />
+    <!-- RTK loss detection -->
+    <param name="rtk_timeout" value="0.5" type="double" />
+    <!-- Recovery smoothing duration -->
+    <param name="recovery_duration" value="1.5" type="double" />
+    <!-- LIO buffer for time alignment -->
+    <param name="lio_buffer_duration" value="2.0" type="double" />
+    <!-- Frame rotation calibration: min displacement to compute direction -->
+    <param name="min_calib_displacement" value="0.5" type="double" />
+    <!-- Frame rotation: sliding window duration (also tracks heading drift) -->
+    <param name="rotation_window_duration" value="1.0" type="double" />
+    <!-- Frame rotation: minimum samples before valid -->
+    <param name="rotation_min_samples" value="5" type="int" />
+  </node>
+</launch>

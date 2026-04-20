@@ -1,0 +1,49 @@
+<launch>
+    <!-- 局部规划器（配合 location.launch 定位程序使用） -->
+    <!-- 
+        TF 树结构：
+        map -> camera_init -> body -> sensor -> vehicle
+        - map -> camera_init: 由 transform_fusion.py 发布
+        - camera_init -> body: 由 FAST_LIO_SAM laserMapping 发布
+        - body -> sensor: 由本 launch 的静态变换发布（单位变换）
+        - sensor -> vehicle: 由 local_planner.launch 的静态变换发布
+    -->
+    
+    <arg name="checkTerrainConn" default="true"/>
+    <!-- use_sim_time: 实时运行设为 false，回放 bag 设为 true -->
+
+    <!-- body -> sensor 静态变换（单位变换，假设 body 和 sensor 在同一位置） -->
+    <node pkg="tf" type="static_transform_publisher" name="bodyToSensorPublisher" 
+          args="0 0 0 0 0 0 sensor_at_scan sensor 100"/>
+    <node pkg="tf" type="static_transform_publisher" name="mapTocameraPublisher" 
+          args="0 0 0 0 0 0 camera_init map 100"/>
+    
+    <!-- 局部路径规划 -->
+    <include file="$(find local_planner)/launch/local_planner.launch" />
+    
+    <!-- 地形分析 -->
+    <include file="$(find terrain_analysis)/launch/terrain_analysis.launch" />
+    <include file="$(find terrain_analysis_ext)/launch/terrain_analysis_ext.launch">
+        <arg name="checkTerrainConn" value="$(arg checkTerrainConn)"/>
+    </include>
+    
+    <!-- 传感器扫描生成 -->
+    <include file="$(find sensor_scan_generation)/launch/sensor_scan_generation.launch" />
+    
+    <!-- LOAM 接口 - 转换里程计和点云格式给 local_planner 使用 -->
+    <!-- 
+        使用 /localization 作为里程计（真正的 map 坐标系，由 transform_fusion.py 发布）
+        使用 TF 将点云从 camera_init 变换到 map 坐标系
+        这样目标点（WaypointTool 发布）、里程计和点云都在同一个 map 坐标系下
+    -->
+    <node pkg="loam_interface" type="loamInterface" name="loamInterface" output="screen" required="true">
+        <param name="stateEstimationTopic" type="string" value="/fused_odom" />
+        <param name="registeredScanTopic" type="string" value="/cloud_registered_body" />
+        <param name="flipStateEstimation" type="bool" value="false" />
+        <param name="flipRegisteredScan" type="bool" value="false" />
+        <param name="sendTF" type="bool" value="false" />
+        <param name="reverseTF" type="bool" value="false" />
+        <param name="downsampleLeafSize" type="double" value="0.5" />  <!-- 匹配 FAST-LIO feats_down_body 密度 -->
+        <param name="minScanRange" type="double" value="1.5" />        <!-- 过滤 body 帧中 <1.5m 的近距离点 -->
+    </node>
+</launch>

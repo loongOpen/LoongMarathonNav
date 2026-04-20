@@ -1,0 +1,26 @@
+<launch>
+  <node pkg="rtk_odom" type="rtk_odom_node" name="rtk_odom_node" output="screen">
+    <!-- RTK 话题 -->
+    <param name="gnss_topic" value="/qx/evk" />
+    <param name="heading_topic" value="/qx/evk/heading" />
+    <!-- 坐标系 -->
+    <param name="frame_id" value="camera_init" />
+    <param name="child_frame_id" value="rtk" />
+    <!-- RTK-LiDAR yaw offset (deg): set to NEGATIVE of fusion's frame_rotation -->
+    <!-- e.g. fusion calibrated 5.76 deg => set -5.76 here -->
+    <!-- <param name="yaw_offset_deg" value="-2.31" /> data-->
+    <!-- <param name="yaw_offset_deg" value="-5.28" / jichuang> -->
+    <param name="yaw_offset_deg" value="0" />
+     <!-- <param name="yaw_offset_deg" value="-178" />  -->
+
+    <!-- Preset path YAML: load GPS waypoints and publish as /preset_path -->
+    <param name="preset_path_file" value="$(find rtk_odom)/../../path/path.yaml" />
+    <!-- Lane boundaries -> /lane_boundary_left, /lane_boundary_right (latched) -->
+    <param name="lane_left_file" value="$(find rtk_odom)/../../path/lane_boundary_left.yaml" />
+    <param name="lane_right_file" value="$(find rtk_odom)/../../path/lane_boundary_right.yaml" />
+    <!-- GNSS 到 LiDAR 外参 (与 map.yaml 中 extrinT_Gnss2Lidar 一致) -->
+    <param name="extrinT_x" value="0.0" />
+    <param name="extrinT_y" value="0.0" />
+    <param name="extrinT_z" value="0.0" />
+  </node>
+</launch>

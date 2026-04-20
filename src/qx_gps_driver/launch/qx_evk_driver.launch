@@ -1,0 +1,5 @@
+<launch>
+    <rosparam command="load" file="$(find qx_evk_driver)/config/qx_evk_cfg.yaml" />
+    <node pkg="qx_evk_driver" type="qx_evk_driver_node" name="qx_data_sender" output="screen">
+    </node>
+</launch>

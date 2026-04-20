@@ -1,0 +1,90 @@
+<launch>
+
+  <!-- ==================== 全局参数 ==================== -->
+  <arg name="sensorOffsetX" default="0"/>      <!-- 传感器相对于车辆中心的X轴偏移(米) -->
+  <arg name="sensorOffsetY" default="0"/>      <!-- 传感器相对于车辆中心的Y轴偏移(米) -->
+  <arg name="twoWayDrive" default="false"/>    <!-- 是否允许双向行驶(前进+后退)，false=只前进 -->
+  <arg name="maxSpeed" default="2.8"/>         <!-- 最大速度(m/s) -->
+  <arg name="autonomyMode" default="true"/>    <!-- 自主导航模式(true)还是手柄控制模式(false) -->
+  <arg name="autonomySpeed" default="3.0"/>    <!--自主模式下的默认速度(m/s) -->
+  <arg name="joyToSpeedDelay" default="3.0"/>  <!-- 手柄松开后多久切换到自主速度(秒) -->
+
+  <!-- ==================== localPlanner 节点 (路径规划) ==================== -->
+  <node pkg="local_planner" type="localPlanner" name="localPlanner" output="screen" required="true">
+    <param name="pathFolder" type="string" value="$(find local_planner)/paths" />  <!-- 预计算路径文件夹 -->
+    <param name="vehicleLength" type="double" value="0.6" />    <!-- 车辆长度(米)，用于碰撞检测 -->
+    <param name="vehicleWidth" type="double" value="0.6" />     <!-- 车辆宽度(米)，用于碰撞检测 -->
+    <param name="sensorOffsetX" value="$(arg sensorOffsetX)" />
+    <param name="sensorOffsetY" value="$(arg sensorOffsetY)" />
+    <param name="twoWayDrive" value="$(arg twoWayDrive)" />
+    <param name="laserVoxelSize" type="double" value="0.05" />      <!-- 激光点云降采样体素大小(米) -->
+    <param name="terrainVoxelSize" type="double" value="0.2" />     <!-- 地形点云降采样体素大小(米) -->
+    <param name="useTerrainAnalysis" type="bool" value="true" />    <!-- 使用地形分析结果而非原始激光点云 -->
+    <param name="checkObstacle" type="bool" value="true" />         <!-- 是否检查障碍物 -->
+    <param name="checkRotObstacle" type="bool" value="true" />     <!-- 是否检查旋转时的障碍物 -->
+    <param name="adjacentRange" type="double" value="4.25" />       <!-- 规划考虑的范围半径(米) -->
+    <param name="obstacleHeightThre" type="double" value="0.15" />  <!-- 障碍物高度阈值(米)，超过此值视为障碍 -->
+    <param name="groundHeightThre" type="double" value="0.1" />     <!-- 地面高度阈值(米) -->
+    <param name="costHeightThre" type="double" value="0.2" />       <!-- 代价计算的高度阈值(米) -->
+    <param name="costScore" type="double" value="0.02" />           <!-- 代价评分系数 -->
+    <param name="useCost" type="bool" value="false" />              <!-- 是否使用代价进行路径评分 -->
+    <param name="pointPerPathThre" type="int" value="10" />          <!-- 判定路径被阻挡的最小点数 -->
+    <param name="minRelZ" type="double" value="-0.5" />             <!-- 相对车辆的最小Z高度(米)，过滤地面以下点 -->
+    <param name="maxRelZ" type="double" value="0.25" />             <!-- 相对车辆的最大Z高度(米)，过滤太高的点 -->
+    <param name="maxSpeed" value="$(arg maxSpeed)" />
+    <param name="dirWeight" type="double" value="0.02" />           <!-- 方向偏差权重，用于路径评分 -->
+    <param name="dirThre" type="double" value="90.0" />             <!-- 方向角度阈值(度)，超过则不考虑该方向 -->
+    <param name="dirToVehicle" type="bool" value="false" />         <!-- 方向阈值是否相对于车辆而非目标 -->
+    <param name="pathScale" type="double" value="3" />           <!-- 路径缩放因子 -->
+    <param name="minPathScale" type="double" value="0.75" />        <!-- 最小路径缩放因子 -->
+    <param name="pathScaleStep" type="double" value="0.25" />       <!-- 路径缩放步长(找不到路时逐步缩小) -->
+    <param name="pathScaleBySpeed" type="bool" value="true" />      <!-- 路径缩放是否随速度变化 -->
+    <param name="minPathRange" type="double" value="1.0" />         <!-- 最小规划范围(米) -->
+    <param name="pathRangeStep" type="double" value="0.5" />        <!-- 规划范围缩减步长(米) -->
+    <param name="pathRangeBySpeed" type="bool" value="true" />      <!-- 规划范围是否随速度变化 -->
+    <param name="pathCropByGoal" type="bool" value="true" />        <!-- 路径是否根据目标距离裁剪 -->
+    <param name="autonomyMode" value="$(arg autonomyMode)" />
+    <param name="autonomySpeed" value="$(arg autonomySpeed)" />
+    <param name="joyToSpeedDelay" value="$(arg joyToSpeedDelay)" />
+    <param name="joyToCheckObstacleDelay" type="double" value="5.0" />  <!-- 手柄松开后多久恢复障碍物检查(秒) -->
+    <param name="goalClearRange" type="double" value="0.5" />          <!-- 目标点清除范围(米)，到达此范围内视为到达 -->
+  </node>
+
+  <!-- ==================== pathFollower 节点 (路径跟踪) ==================== -->
+  <node pkg="local_planner" type="pathFollower" name="pathFollower" output="screen" required="true">
+    <param name="sensorOffsetX" value="$(arg sensorOffsetX)" />
+    <param name="sensorOffsetY" value="$(arg sensorOffsetY)" />
+    <param name="pubSkipNum" type="int" value="1" />              <!-- 发布频率跳过数(1=100Hz, 2=50Hz) -->
+    <param name="twoWayDrive" value="$(arg twoWayDrive)" />
+    <param name="lookAheadDis" type="double" value="3.0" />       <!-- 前视距离(米)，增大可使转向更平滑 -->
+    <param name="yawRateGain" type="double" value="3.5" />        <!-- 运动时的角速度增益(降低以配合较低的maxYawRate) -->
+    <param name="stopYawRateGain" type="double" value="3.0" />    <!-- 停止时的角速度增益 -->
+    <param name="maxYawRate" type="double" value="64.38" />        <!-- 最大角速度(度/秒) ≈ 0.5 rad/s -->
+    <param name="maxSpeed" value="$(arg maxSpeed)" />
+    <param name="maxAccel" type="double" value="0.5" />           <!-- 最大加速度(m/s²)，降低使加减速更平滑 -->
+    <param name="switchTimeThre" type="double" value="1.0" />     <!-- 前后切换的最小间隔时间(秒) -->
+    <param name="dirDiffThre" type="double" value="0.5" />        <!-- 方向误差阈值(弧度)，约28.6°，放宽以允许更高速度 -->
+    <param name="stopDisThre" type="double" value="0.3" />        <!-- 停止距离阈值(米) -->
+    <param name="slowDwnDisThre" type="double" value="0.5" />     <!-- 减速距离阈值(米)，增大使减速更早更平滑 -->
+    <param name="useInclRateToSlow" type="bool" value="false" />  <!-- 是否根据倾斜角速度减速(防翻车) -->
+    <param name="inclRateThre" type="double" value="120.0" />     <!-- 倾斜角速度阈值(度/秒) -->
+    <param name="slowRate1" type="double" value="0.25" />         <!-- 第一阶段减速比例 -->
+    <param name="slowRate2" type="double" value="0.5" />          <!-- 第二阶段减速比例 -->
+    <param name="slowTime1" type="double" value="2.0" />          <!-- 第一阶段减速持续时间(秒) -->
+    <param name="slowTime2" type="double" value="2.0" />          <!-- 第二阶段减速持续时间(秒) -->
+    <param name="useInclToStop" type="bool" value="false" />      <!-- 是否根据倾斜角停止(防翻车) -->
+    <param name="inclThre" type="double" value="45.0" />          <!-- 倾斜角阈值(度)，超过则停止 -->
+    <param name="stopTime" type="double" value="5.0" />           <!-- 触发倾斜停止后的停止时间(秒) -->
+    <param name="noRotAtStop" type="bool" value="false" />        <!-- 停止时是否禁止旋转 -->
+    <param name="noRotAtGoal" type="bool" value="true" />         <!-- 到达目标时是否禁止旋转 -->
+    <param name="autonomyMode" value="$(arg autonomyMode)" />
+    <param name="autonomySpeed" value="$(arg autonomySpeed)" />
+    <param name="joyToSpeedDelay" value="$(arg joyToSpeedDelay)" />
+  </node>
+
+  <!-- ==================== TF 静态变换 ==================== -->
+  <!-- sensor -> vehicle 的变换 (传感器到车辆中心) -->
+  <node pkg="tf" type="static_transform_publisher" name="vehicleTransPublisher" 
+        args="-$(arg sensorOffsetX) -$(arg sensorOffsetY) 0 0 0 0 /sensor /vehicle 1000"/>
+
+</launch>

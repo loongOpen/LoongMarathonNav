@@ -1,0 +1,7 @@
+serial_port: /dev/ttyUSB0 #串口设备,程序启动前请确保串口的读写权限
+topic: /qx/evk            #话题名称
+baud_rate: 115200         #波特率
+lever_arm: 0.00           #杆臂值（主天线到标定位置的距离），根据标定结果修改
+offset_angle: 90.00        #偏移角度
+topic_vel: /qx/evk/velocity
+topic_heading: /qx/evk/heading

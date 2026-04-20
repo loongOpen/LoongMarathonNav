@@ -1,0 +1,113 @@
+# ============================
+# FAST_LIO_SAM 配置文件 - Livox MID360
+# ============================
+
+common:
+    lid_topic:  "/livox/lidar"                    # 雷达点云话题
+    imu_topic:  "/livox/imu"                      # IMU 数据话题
+    gnss_topic: "/qx/evk"                        # GPS 话题 (sensor_msgs/NavSatFix)
+    time_sync_en: false                           # 时间同步开关，仅在外部时间同步不可用时开启
+    time_offset_lidar_to_imu: 0.0                 # 雷达与IMU时间偏移量(秒)，如不确定请设为0
+
+preprocess:
+    lidar_type: 1                                 # 雷达类型: 1-Livox, 2-Velodyne, 3-Ouster, 4-RoboSense
+    scan_line: 4                                 
+    scan_rate: 10                                 
+    blind: 1.0                              
+
+mapping:
+    acc_cov: 0.1                                  # 加速度计协方差
+    gyr_cov: 0.1                                  # 陀螺仪协方差
+    b_acc_cov: 0.0001                             # 加速度计偏置协方差
+    b_gyr_cov: 0.0001                             # 陀螺仪偏置协方差
+    fov_degree: 360                               # 视场角(度)，MID360 为 360 度全向
+    det_range: 100.0                              # 检测范围(米)
+    extrinsic_est_en: false                        # 是否在线估计IMU-LiDAR外参
+    # IMU 到 LiDAR 外参 - 平移向量 [x, y, z] (米)
+    extrinsic_T: [ -0.011, -0.02329, 0.04412 ]
+    # IMU 到 LiDAR 外参 - 旋转矩阵 (行主序)
+    extrinsic_R: [ 1, 0, 0,
+                   0, 1, 0,
+                   0, 0, 1]
+    # GPS 到 LiDAR 外参 - 平移向量 [x, y, z] (米)
+    extrinT_Gnss2Lidar: [0.0, 0.0, 0.0]
+    # GPS 到 LiDAR 外参 - 旋转矩阵 (单天线GPS保持单位阵即可)
+    extrinR_Gnss2Lidar: [1, 0, 0,
+                         0, 1, 0,
+                         0, 0, 1]
+
+publish:
+    path_en: true                                 # 是否发布轨迹
+    scan_publish_en: true                         # 是否发布点云
+    dense_publish_en: false                        # 是否发布稠密点云
+    scan_bodyframe_pub_en: true                   # 是否在IMU坐标系下发布点云
+
+pcd_save:
+    pcd_save_en: false                            # 关闭实时累积保存(会有重影)，改用退出时自动保存优化后地图
+    interval: -1                                  # 每个PCD文件保存的帧数，-1表示全部保存到一个文件
+
+# ============================
+# 体素滤波参数
+# ============================
+odometrySurfLeafSize: 0.4                         # 里程计面特征降采样分辨率(米)，室外0.4，室内0.2
+mappingCornerLeafSize: 0.2                        # 建图角特征降采样分辨率(米)，室外0.2，室内0.1
+mappingSurfLeafSize: 0.4                          # 建图面特征降采样分辨率(米)，室外0.4，室内0.2，增大可减轻回环重影
+
+# ============================
+# 机器人运动约束 (适用于2D机器人)
+# ============================
+z_tollerance: 1000                                # Z轴容差(米)，2D机器人设小值如0.5
+rotation_tollerance: 1000                         # 旋转容差(弧度)，2D机器人设小值如0.1
+
+# ============================
+# CPU 参数
+# ============================
+numberOfCores: 20                                  # 建图优化使用的CPU核心数
+mappingProcessInterval: 0.15                      # 建图处理间隔(秒)，控制建图频率
+
+# ============================
+# 关键帧选取参数
+# ============================
+surroundingkeyframeAddingDistThreshold: 1.0       # 关键帧添加距离阈值(米)
+surroundingkeyframeAddingAngleThreshold: 0.2      # 关键帧添加角度阈值(弧度)
+surroundingKeyframeDensity: 2.0                   # 周围关键帧降采样密度(米)
+surroundingKeyframeSearchRadius: 50.0             # 关键帧搜索半径(米)
+
+# ============================
+# 回环检测参数
+# ============================
+loopClosureEnableFlag: false                       # 是否启用回环检测
+loopClosureFrequency: 2.0                         # 回环检测频率(Hz)
+surroundingKeyframeSize: 50                       # 回环检测子地图大小(关键帧数量)
+historyKeyframeSearchRadius: 20.0                 # 历史关键帧搜索半径(米)
+historyKeyframeSearchTimeDiff: 30.0               # 历史关键帧搜索时间差(秒)，只搜索N秒前的帧
+historyKeyframeSearchNum: 25                      # 用于回环的历史关键帧数量
+historyKeyframeFitnessScore: 0.3                  # ICP匹配阈值，越小匹配越严格
+
+# ============================
+# GPS 参数
+# ============================
+useGps: false                                     # GPS总开关，true启用/false禁用
+useImuHeadingInitialization: false                # 是否使用IMU航向初始化
+useGpsElevation: false                             # 是否使用GPS高度优化(RTK建议true)
+gpsCovThreshold: 1.0                              # GPS协方差阈值(RTK:0.1~0.5, 普通GPS:2~5)
+poseCovThreshold: 5.0                            # 位姿协方差阈值，低于此值不添加GPS因子
+
+# ============================
+# 可视化参数
+# ============================
+globalMapVisualizationSearchRadius: 100.0         # 全局地图可视化搜索半径(米)
+globalMapVisualizationPoseDensity: 10.0           # 全局地图可视化关键帧密度(米)
+globalMapVisualizationLeafSize: 1.0               # 全局地图可视化点云分辨率(米)
+
+# ============================
+# IKD-Tree 地图参数
+# ============================
+visulize_IkdtreeMap: false                           # 是否可视化IKD-Tree子地图
+recontructKdTree: true                            # 是否重建KD-Tree
+
+# ============================
+# 地图保存参数
+# ============================
+savePCD: false                                     # 是否保存PCD地图文件
+savePCDDirectory: "/code/slam_ws/src/FAST_LIO_SAM/PCD/"  # PCD保存路径（相对于 $HOME）

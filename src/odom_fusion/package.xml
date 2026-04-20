@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>odom_fusion</name>
+  <version>0.1.0</version>
+  <description>双里程计融合：融合 RTK（高精度、偶发丢失）与 LIO（高频、累计漂移），输出 /fused_odom 和 /fused_path</description>
+
+  <maintainer email="user@example.com">user</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+
+  <export>
+  </export>
+</package>
